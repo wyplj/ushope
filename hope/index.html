@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <style type="text/css">
+        *{
+            padding: 0;
+            margin: 0;
+        }
+        li{
+            list-style: none;
+        }
+        a{
+            text-decoration: none;
+        }
+        .box{
+            width: 100%;
+            height: 800px;
+            margin: auto;
+        }
+        .main{
+            width: 100%;
+            height: 800px;
+            margin-top: 20px;
+        }
+        ul{
+            width: 100%;
+            height: 100%;
+            border: 1px solid;
+            justify-content: space-around;
+            display: flex;
+            flex-wrap: wrap;
+        }
+        li{
+            width: 15%;
+            height: 20%;
+            /*border: solid 1px;*/
+            position: relative;
+        }
+        p{
+            width: 100%;
+            height: 52px;
+            border: 1px solid;
+        }
+
+        #true{
+            width: 100%;
+            height: 40px;
+            /*line-height: 20px;*/
+            position: absolute;
+            top: 160px;
+        }
+        .color{
+            background: purple;
+        }
+    </style>
+</head>
+<body>
+<div class="box">
+        <input type="text" id="xinyuan"  placeholder="心愿" />
+        <button id="add">提交</button>
+        <div class="main">
+                <ul id="content">
+
+                </ul>
+        </div>
+</div>
+</body>
+<script src="./js/ajax_v3.js"></script>
+<script src="./js/jquery-1.11.1.min.js"></script>
+<script type="text/javascript">
+    $("#add").click(function(){
+        ajax.post("http://localhost:8080/add",{
+            xinYuan:$("#xinyuan").val(),
+            timer:new Date().getTime()
+        }).then((res)=>{
+            res=JSON.parse(res)
+            // console.log(res)
+            if(res.status=="-1"){
+               alert(res.statusText)
+            }else{
+                console.log(res);
+                show();
+            }
+        })
+    })
+    show()
+    function show(){
+        ajax.get("http://localhost:8080/show").then((res)=>{
+            res=JSON.parse(res)
+            if(res.status=="0"){
+                $("ul").html(res.statusText)
+            }else if(res.status=="8"){
+                var arr=res.newArr;
+                console.log(arr)
+                var str=""
+                for (var i = 0; i < arr.length; i++) {
+                    arr[i].timer=getDate(arr[i].timer)
+                    str+=`
+                        <li>
+                            <p onclick=del('${arr[i]._id}')>删除</p>
+                            <p>${arr[i].xinYuan}</p>
+                            <p>${arr[i].timer}</p>
+                            <p id="true" onclick=choose("${arr[i]._id}") class="${arr[i].active}" >√</p>
+                        </li>
+                        `
+                }
+                $("ul").html(str)
+            }else if(res.status=="4"){
+                let arr=res.data;
+                let str=""
+                for (var i = 0; i < arr.length; i++) {
+                    arr[i].timer=getDate(arr[i].timer)
+                    str+=`
+                        <li>
+                            <p onclick=del('${arr[i]._id}')>删除</p>
+                            <p>${arr[i].xinYuan}</p>
+                            <p>${arr[i].timer}</p>
+                            <p id="true" onclick=choose("${arr[i]._id}") class="${arr[i].active}" >√</p>
+                        </li>
+                        `
+                }
+                $("ul").html(str)
+            }
+
+
+        })
+    }
+    function del(id) {
+        console.log(id)
+        ajax.get("http://localhost:8080/del",{
+            id:id
+        }).then((res)=>{
+            console.log(res)
+            show()
+        })
+    }
+    function choose(id) {
+        console.log($(this))
+        ajax.get("http://localhost:8080/chos",{
+            _id:id,
+            active:"color"
+        }).then((res)=>{
+            if(res.status=="2"){
+                show()
+                alert("恭喜愿望已实现")
+            }else{
+                alert("无需重复实现愿望")
+            }
+        })
+    }
+    function changeTime(time) {
+        var time = time * 1;
+        var data = new Date(time);
+        var str = "年-月-日 时:分:秒";
+        return str.replace("年", data.getFullYear())
+            .replace("月", (data.getMonth() + 1 < 10) ? "0" + data.getMonth() + 1 : data.getMonth() + 1)
+            .replace("日", (data.getDate() < 10) ? "0" + data.getDate() : data.getDate())
+            .replace("时", (data.getHours() < 10) ? "0" + data.getHours() : data.getHours())
+            .replace("分", (data.getMinutes() < 10) ? "0" + data.getMinutes() : data.getMinutes())
+            .replace("秒", (data.getSeconds() < 10) ? "0" + data.getSeconds() : data.getSeconds());
+    }
+</script>
+</html>
